@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import datetime
 import time
 
-def getNums():                                                         # 從網站爬取兩期中獎發票號
+def getNums():                                                       # 從網站爬取兩期中獎發票號
     url = ["https://invoice.etax.nat.gov.tw/index.html", "https://invoice.etax.nat.gov.tw/lastNumber.html"]
     number = []
     for i in url:
@@ -141,33 +141,42 @@ def dateSeeker(invoice):
     return last, din, invade
 
 def numSeeker(invoice, nins):
+    global money
     inv = invoice[2:10]
     award = True
     print('中獎情況:', end=' ')
     if inv == nins[0]:
         print('你中了1000萬元')
+        money += 10000000
         return award
     if inv == nins[1]:
         print('你中了200萬元')
+        money += 2000000
         return award
     for i in nins[2]:
         if inv == i:
             print('你中了20萬元')
+            money += 200000
             break
         elif inv[-7:] == i[-7:]:
             print('你中了4萬元')
+            money += 40000
             break
         elif inv[-6:] == i[-6:]:
             print('你中了1萬元')
+            money += 10000
             break
         elif inv[-5:] == i[-5:]:
             print('你中了4000元')
+            money += 4000
             break
         elif inv[-4:] == i[-4:]:
             print('你中了1000元')
+            money += 1000
             break
         elif inv[-3:] == i[-3:]:
             print('你中了200元')
+            money += 200
             break
     else:
         print('你沒中獎QQ')
@@ -197,6 +206,7 @@ def getAward(date):
 
 if __name__ == '__main__':
     times = 1
+    money = 0
     ns, invSea = getNums()
     print(invSea[0][1:16]+':', '特別獎', ns[0][0], '特獎', ns[0][1], '頭獎', ns[0][2])
     print(invSea[0][38:53]+':', '特別獎', ns[1][0], '特獎', ns[1][1], '頭獎', ns[1][2])
@@ -207,6 +217,8 @@ if __name__ == '__main__':
         lastSea, invDate, invades = dateSeeker(invoice)
         times += 1
         if invades:
+            print('目前累計中獎金額: {0}元'.format(money))
+            print()
             continue
         if lastSea:
             nin = ns[1]
@@ -215,4 +227,8 @@ if __name__ == '__main__':
         invAward = numSeeker(invoice, nin)
         if invAward:
             getAward(invDate)
+            print('累計獎金: {0}元'.format(money))
+        else:
+            print('累計獎金: {0}元'.format(money))
+        print()
 
