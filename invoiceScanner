@@ -1,0 +1,215 @@
+import cv2
+import pyautogui
+import requests
+from bs4 import BeautifulSoup
+import datetime
+import time
+
+def getNums():
+    url = ["https://invoice.etax.nat.gov.tw/index.html", "https://invoice.etax.nat.gov.tw/lastNumber.html"]
+    number = []
+    for i in url:
+        web = requests.get(i)
+        web.encoding = 'utf-8'
+
+        doc = BeautifulSoup(web.text, "html.parser")
+        num1 = doc.find_all(class_="font-weight-bold")
+        nums = []
+        nums1 = []
+        for i in num1:
+            t = i.text
+            nums.append(t)
+        nums1.append(nums[0])
+        nums1.append(nums[1])
+        nums1.append([nums[2]+nums[3], nums[4]+nums[5], nums[6]+nums[7]])
+        number.append(nums1)
+    return number
+
+def invScanner():
+    cap = cv2.VideoCapture(0)              
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
+
+    qrcode = cv2.QRCodeDetector()
+    qr_invoice = ''
+
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+    while True:
+        ret, frame = cap.read()             # 讀取影片的每一幀
+        if not ret:
+            print("Cannot receive frame")   # 如果讀取錯誤，印出訊息
+            break
+        frame = cv2.resize(frame, (720, 420))
+        find, data, bbox, rectified = qrcode.detectAndDecodeMulti(frame)
+        if find:                                       
+            for i in range(len(data)):
+                if data[i][:2] == '**' or data[i] == '':
+                    continue
+                else:
+                    time.sleep(0.8)
+                    pyautogui.press('q')
+                    qr_invoice = data[i]           # 偵測到發票號碼，關閉攝影機
+                    break
+        cv2.imshow('Scan here!', frame)          # 如果讀取成功，顯示該幀的畫面
+        if cv2.waitKey(1) == ord('q'):      # 每一毫秒更新一次，直到按下 q 結束
+            break
+        elif cv2.waitKey(1) == ord('s'):
+            print('掃描結束')
+            exit()
+    cap.release()                           # 所有作業都完成後，釋放資源
+    cv2.destroyAllWindows()                 # 結束所有視窗
+    return qr_invoice
+
+def dateSeeker(invoice):                    
+    date = invoice[10:17]
+    in_year, in_month, in_day = date[:3], date[3:5], date[5:]
+    din = datetime.date(int(in_year) + 1911, int(in_month), int(in_day))
+    print('發票日期:', din)
+    today = datetime.date.today()
+
+    last = False
+    invade = False
+    if din.year == today.year and (din.month == 1 or din.month == 2):
+        if (datetime.date(today.year, 3, 25) - today).days <= 0 and (datetime.date(today.year, 7, 5) - today).days >= 0:
+            if (datetime.date(today.year, 5, 25) - today).days <= 0:
+                last = True
+        elif (datetime.date(today.year, 3, 25) - today).days > 0:
+            print('尚未開獎')
+            invade = True
+        else:
+            print('已超過兌獎日期')
+            invade = True
+    elif din.year == today.year and (din.month == 3 or din.month == 4):
+        if (datetime.date(today.year, 5, 25) - today).days <= 0 and (datetime.date(today.year, 9, 5) - today).days >= 0:
+            if (datetime.date(today.year, 7, 25) - today).days <= 0:
+                last = True
+        elif (datetime.date(today.year, 5, 25) - today).days > 0:
+            print('尚未開獎')
+            invade = True
+        else:
+            print('已超過兌獎日期')
+            invade = True
+    elif din.year == today.year and (din.month == 5 or din.month == 6):
+        if (datetime.date(today.year, 7, 25) - today).days <= 0 and (datetime.date(today.year, 11, 5) - today).days >= 0:
+            if (datetime.date(today.year, 9, 25) - today).days <= 0:
+                last = True
+        elif (datetime.date(today.year, 7, 25) - today).days > 0:
+            print('尚未開獎')
+            invade = True
+        else:
+            print('已超過兌獎日期')
+            invade = True
+    elif (din.year == today.year or din.year == today.year - 1) and (din.month == 7 or din.month == 8):
+        if (datetime.date(din.year, 9, 25) - today).days <= 0 and (datetime.date(din.year + 1, 1, 5) - today).days >= 0:
+            if (datetime.date(din.year, 11, 25) - today).days <= 0:
+                last = True
+        elif (datetime.date(din.year, 9, 25) - today).days > 0:
+            print('尚未開獎')
+            invade = True
+        else:
+            print('已超過兌獎日期')
+            invade = True
+    elif (din.year == today.year or din.year == today.year - 1) and (din.month == 9 or din.month == 10):
+        if (datetime.date(din.year, 11, 25) - today).days <= 0 and (datetime.date(din.year + 1, 3, 5) - today).days >= 0:
+            if (datetime.date(din.year + 1, 1, 25) - today).days <= 0:
+                last = True
+        elif (datetime.date(din.year, 11, 25) - today).days > 0:
+            print('尚未開獎')
+            invade = True
+        else:
+            print('已超過兌獎日期')
+            invade = True
+    elif (din.year == today.year or din.year == today.year - 1) and (din.month == 11 or din.month == 12):
+        if (datetime.date(din.year + 1, 1, 25) - today).days <= 0 and (datetime.date(din.year + 1, 5, 5) - today).days >= 0:
+            if (datetime.date(din.year + 1, 3, 25) - today).days <= 0:
+                last = True
+        elif (datetime.date(din.year + 1, 1, 25) - today).days > 0:
+            print('尚未開獎')
+            invade = True
+        else:
+            print('已超過兌獎日期')
+            invade = True
+    else:
+        print('已超過兌獎日期')
+        invade = True
+
+    return last, din, invade
+
+def numSeeker(invoice, nins):
+    inv = invoice[2:10]
+    award = True
+    print('中獎情況:', end=' ')
+    if inv == nins[0]:
+        print('你中了1000萬元')
+        return award
+    if inv == nins[1]:
+        print('你中了200萬元')
+        return award
+    for i in nins[2]:
+        if inv == i:
+            print('你中了20萬元')
+            break
+        elif inv[-7:] == i[-7:]:
+            print('你中了4萬元')
+            break
+        elif inv[-6:] == i[-6:]:
+            print('你中了1萬元')
+            break
+        elif inv[-5:] == i[-5:]:
+            print('你中了4000元')
+            break
+        elif inv[-4:] == i[-4:]:
+            print('你中了1000元')
+            break
+        elif inv[-3:] == i[-3:]:
+            print('你中了200元')
+            break
+    else:
+        print('你沒中獎QQ')
+        award = False
+    return award
+
+def getAward(date):
+    if date.month == 1 or date.month == 2:
+        d1 = datetime.date(date.year, 4, 6)
+        d2 = datetime.date(date.year, 7, 5)
+    elif date.month == 3 or date.month == 4:
+        d1 = datetime.date(date.year, 6, 6)
+        d2 = datetime.date(date.year, 9, 5)
+    elif date.month == 5 or date.month == 6:
+        d1 = datetime.date(date.year, 8, 6)
+        d2 = datetime.date(date.year, 11, 5)
+    elif date.month == 7 or date.month == 8:
+        d1 = datetime.date(date.year, 10, 6)
+        d2 = datetime.date(date.year + 1, 1, 5)
+    elif date.month == 9 or date.month == 10:
+        d1 = datetime.date(date.year, 12, 6)
+        d2 = datetime.date(date.year + 1, 3, 5)
+    else:
+        d1 = datetime.date(date.year + 1, 2, 6)
+        d2 = datetime.date(date.year + 1, 5, 5)
+    print('兌獎日期:', d1, '到', d2)
+
+if __name__ == '__main__':
+    times = 1
+    ns = getNums()
+    print('本期中獎號碼:', '特別獎', ns[0][0], '特獎', ns[0][1], '頭獎', ns[0][2])
+    print('上期中獎號碼:', '特別獎', ns[1][0], '特獎', ns[1][1], '頭獎', ns[1][2])
+    while True:
+        invoice = invScanner()
+        print('第{0}張:'.format(times))
+        print('發票號碼:', invoice[:10])
+        lastSea, invDate, invades = dateSeeker(invoice)
+        times += 1
+        if invades:
+            continue
+        if lastSea:
+            nin = ns[1]
+        else:
+            nin = ns[0]
+        invAward = numSeeker(invoice, nin)
+        if invAward:
+            getAward(invDate)
+
