@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import datetime
 import time
 
-def getNums():                              # 從網站爬取兩期中獎發票號
+def getNums():                                                         # 從網站爬取兩期中獎發票號
     url = ["https://invoice.etax.nat.gov.tw/index.html", "https://invoice.etax.nat.gov.tw/lastNumber.html"]
     number = []
     for i in url:
@@ -13,6 +13,11 @@ def getNums():                              # 從網站爬取兩期中獎發票�
         web.encoding = 'utf-8'
 
         doc = BeautifulSoup(web.text, "html.parser")
+        season = doc.find_all(class_="etw-submenu")
+        seas = []
+        for i in season:
+            t = i.text
+            seas.append(t)
         num1 = doc.find_all(class_="font-weight-bold")
         nums = []
         nums1 = []
@@ -23,16 +28,14 @@ def getNums():                              # 從網站爬取兩期中獎發票�
         nums1.append(nums[1])
         nums1.append([nums[2]+nums[3], nums[4]+nums[5], nums[6]+nums[7]])
         number.append(nums1)
-    return number
+    return number, seas
 
 def invScanner():
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
-
     qrcode = cv2.QRCodeDetector()
     qr_invoice = ''
-
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
@@ -194,9 +197,9 @@ def getAward(date):
 
 if __name__ == '__main__':
     times = 1
-    ns = getNums()
-    print('本期中獎號碼:', '特別獎', ns[0][0], '特獎', ns[0][1], '頭獎', ns[0][2])
-    print('上期中獎號碼:', '特別獎', ns[1][0], '特獎', ns[1][1], '頭獎', ns[1][2])
+    ns, invSea = getNums()
+    print(invSea[0][1:16]+':', '特別獎', ns[0][0], '特獎', ns[0][1], '頭獎', ns[0][2])
+    print(invSea[0][38:53]+':', '特別獎', ns[1][0], '特獎', ns[1][1], '頭獎', ns[1][2])
     while True:
         invoice = invScanner()
         print('第{0}張:'.format(times))
